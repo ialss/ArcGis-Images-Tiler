@@ -1,32 +1,52 @@
 import requests
 import os
 from urllib.parse import urlencode
+import geopandas as gpd
 
-arcgis_url = "https://gis.cookcountyil.gov/imagery/rest/services/CookOrtho2024/ImageServer/exportImage?" 
-output_dir = "tiles" 
+from shapely.geometry import box
 
-x_min = 994999.9999770783
-y_min = 1740000.000119239
-x_max = 1212499.9999770783
-y_max = 2007500.000119239
-tile_resolution = 1024  
-crs = 3435  
+arcgis_url = "https://gis.cookcountyil.gov/imagery/rest/services/CookOrtho2024/ImageServer/exportImage?"
+output_dir = "tiles"
+
+tile_resolution = 1024
+crs = 3435
+
 
 os.makedirs(output_dir, exist_ok=True)
 
+
 geojson_path = "Municipality.geojson"
 
-# Correctly format bbox without parentheses
-bbox = f"{x_min},{y_min},{x_max},{y_max}"
-print(bbox)
+
+gdf = gpd.read_file(geojson_path)
+
+
+municipality = "Palatine"
+filtered_gdf = gdf[gdf["MUNICIPALITY"] == municipality]
+
+bbox = filtered_gdf.geometry.bounds.iloc[0]
+
+minx, miny, maxx, maxy = bbox
+
+bbox_geo = box(minx, miny, maxx, maxy)
+gdf_geo = gpd.GeoDataFrame({'geometry': [bbox_geo]})
+
+
+gdf_geo = gdf_geo.set_crs('EPSG:4326')
+
+
+gdf_geo = gdf_geo.to_crs(f"EPSG:{crs}")
+
+
+xmin, ymin, xmax, ymax = gdf_geo.geometry.bounds.iloc[0]
+
 
 params = {
-    'bbox': bbox,
-    'bboxSR': '',
-    'size': '1000,1000',
-    'imageSR': '',
-    'time': '',
-    'format': 'png',
+    'bbox': f"{xmin},{ymin},{xmax},{ymax}",
+    'bboxSR': crs,
+    'size': f"{tile_resolution},{tile_resolution}",
+    'imageSR': crs,
+    'format': 'png', # types: jpgpng | png | png8 | png24 | jpg | bmp | gif | tiff | png32 | bip | bsq | lerc
     'pixelType': 'U8',
     'noData': '',
     'noDataInterpretation': 'esriNoDataMatchAny',
@@ -44,11 +64,11 @@ params = {
     'f': 'image'
 }
 
-# Print the full URL (to debug)
 print(f"{arcgis_url}{urlencode(params, doseq=True)}")
 
-# Make the GET request
+
 response = requests.get(f"{arcgis_url}{urlencode(params, doseq=True)}")
+
 
 if response.status_code == 200:
     filename = f"tile_1.png"
@@ -57,7 +77,7 @@ if response.status_code == 200:
         f.write(response.content)
     print(f"Tile successfully downloaded and saved at: {filepath}")
 else:
-    print(f"Failed to download tile: {bbox}")
+    print(f"Failed to download tile: {xmin},{ymin},{xmax},{ymax}")
     print(f"Error: {response.text}")
 
 print("Tile download process complete!")
