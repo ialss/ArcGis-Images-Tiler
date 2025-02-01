@@ -1,0 +1,6 @@
+Municipality: Palatine
+BBox Size: 5280
+Settings File: settings
+GeoJSON File: Municipality.geojson
+CRS: EPSG:6455
+URL: https://gis.cookcountyil.gov/imagery/rest/services/CookOrtho2024/ImageServer/exportImage
