@@ -236,18 +236,3 @@ class settings:
             
 
 settings().runProgram()
-
-
-
-""" 
-
-geojson_processor = GeoJSONFile(input_geojson, target_crs)
-tiles_manager = Tiles(
-    geojson_processor=geojson_processor,
-    url="https://gis.cookcountyil.gov/imagery/rest/services/CookOrtho2024/ImageServer/exportImage",
-    bbox_size=bbox_size
-)
-
-
-geojson_processor.reproject()
-tiles_manager.download_tiles(municipality_name) """
